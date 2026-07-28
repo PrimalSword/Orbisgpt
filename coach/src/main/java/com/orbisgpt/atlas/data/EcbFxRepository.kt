@@ -92,12 +92,13 @@ class EcbFxRepository(private val context: Context) {
             val dateIndex = header.indexOfFirst { it.equals("TIME_PERIOD", true) }
             val valueIndex = header.indexOfFirst { it.equals("OBS_VALUE", true) }
             require(dateIndex >= 0 && valueIndex >= 0) { "Formato CSV do BCE não reconhecido" }
-            return lines.drop(1).mapNotNull { line ->
+            val parsed: List<Pair<LocalDate, Double>> = lines.drop(1).mapNotNull { line ->
                 val cells = parseCsvLine(line)
-                val date = cells.getOrNull(dateIndex)?.let { runCatching(LocalDate::parse).getOrNull() }
+                val date = cells.getOrNull(dateIndex)?.let { raw -> runCatching { LocalDate.parse(raw) }.getOrNull() }
                 val value = cells.getOrNull(valueIndex)?.replace(',', '.')?.toDoubleOrNull()
-                if (date == null || value == null || value <= 0.0) null else date to value
-            }.toMap().toSortedMap()
+                if (date == null || value == null || value <= 0.0) null else Pair(date, value)
+            }
+            return parsed.toMap().toSortedMap()
         } finally {
             connection.disconnect()
         }
@@ -112,12 +113,13 @@ class EcbFxRepository(private val context: Context) {
     private fun loadCache(code: String): Map<LocalDate, Double> {
         val file = cacheFile(code)
         if (!file.exists()) return emptyMap()
-        return file.readLines().mapNotNull { line ->
+        val parsed: List<Pair<LocalDate, Double>> = file.readLines().mapNotNull { line ->
             val cells = line.split(';')
-            val date = cells.getOrNull(0)?.let { runCatching(LocalDate::parse).getOrNull() }
+            val date = cells.getOrNull(0)?.let { raw -> runCatching { LocalDate.parse(raw) }.getOrNull() }
             val value = cells.getOrNull(1)?.toDoubleOrNull()
-            if (date == null || value == null) null else date to value
-        }.toMap().toSortedMap()
+            if (date == null || value == null) null else Pair(date, value)
+        }
+        return parsed.toMap().toSortedMap()
     }
 
     private fun parseCsvLine(line: String): List<String> {
