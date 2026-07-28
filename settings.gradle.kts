@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OrbisDecisionTerminal"
-include(":app")
+rootProject.name = "OrbisAtlas"
+include(":coach")
