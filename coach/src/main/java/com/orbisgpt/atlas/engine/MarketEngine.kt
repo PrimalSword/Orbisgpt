@@ -53,11 +53,16 @@ object MarketEngine {
             freshnessDays = freshness
         )
 
+        // Prevent microscopic moving-average differences from being called a trend.
+        val trendSeparation = abs(sma20 - sma120) / last.coerceAtLeast(1e-12)
+        val minimumTrendSeparation = maxOf(dailyVol * 1.5, 0.002)
+        val orderedUp = last > sma120 && sma20 > sma60 && sma60 > sma120
+        val orderedDown = last < sma120 && sma20 < sma60 && sma60 < sma120
         val state = when {
             freshness > 7 -> MarketState.INSUFFICIENT_DATA
             annualVol > 0.28 -> MarketState.HIGH_RISK
-            last > sma120 && sma20 > sma60 && sma60 > sma120 -> MarketState.UPTREND
-            last < sma120 && sma20 < sma60 && sma60 < sma120 -> MarketState.DOWNTREND
+            orderedUp && trendSeparation >= minimumTrendSeparation -> MarketState.UPTREND
+            orderedDown && trendSeparation >= minimumTrendSeparation -> MarketState.DOWNTREND
             else -> MarketState.RANGE
         }
 
@@ -160,7 +165,7 @@ object MarketEngine {
         add(when (state) {
             MarketState.UPTREND -> "As médias de 20, 60 e 120 dias estão alinhadas para cima."
             MarketState.DOWNTREND -> "As médias de 20, 60 e 120 dias estão alinhadas para baixo."
-            MarketState.RANGE -> "As médias estão misturadas; não há direção suficientemente limpa."
+            MarketState.RANGE -> "As médias estão misturadas ou próximas demais; não há direção suficientemente limpa."
             MarketState.HIGH_RISK -> "A volatilidade anualizada está acima do limite conservador."
             MarketState.INSUFFICIENT_DATA -> "A série está desatualizada para uma decisão prudente."
         })
