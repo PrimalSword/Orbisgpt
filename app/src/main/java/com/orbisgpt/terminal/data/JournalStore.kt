@@ -42,6 +42,7 @@ class JournalStore(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
     fun insert(decision: TerminalDecision, settings: TerminalSettings): Long {
+        if (settings.captureTimeframe != CaptureTimeframe.ENTRY_1M) return -1L
         val probability = decision.probability
         return writableDatabase.insert("journal", null, ContentValues().apply {
             put("created_at", decision.timestamp)
@@ -123,7 +124,8 @@ class JournalStore(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, 
 
     fun performance(mode: MarketMode, playbook: Playbook, regime: MarketRegime): HistoricalPerformance {
         val rows = recent(10_000).filter {
-            it.marketMode == mode && it.playbook == playbook && it.regime == regime
+            it.timeframe == CaptureTimeframe.ENTRY_1M &&
+                it.marketMode == mode && it.playbook == playbook && it.regime == regime
         }
         return HistoricalPerformance(
             wins = rows.count { it.outcome == JournalOutcome.WIN },
