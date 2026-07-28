@@ -26,19 +26,19 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          gradle :app:testDebugUnitTest --stacktrace 2>&1 | tee gradle-test.log
+          gradle :coach:testDebugUnitTest --stacktrace 2>&1 | tee gradle-test.log
       - name: Build debug APK
         shell: bash
         run: |
           set -o pipefail
-          gradle :app:assembleDebug --stacktrace 2>&1 | tee gradle-build.log
+          gradle :coach:assembleDebug --stacktrace 2>&1 | tee gradle-build.log
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Orbis-Decision-Terminal-v1.0.0-RC1-debug.apk
+        run: cp coach/build/outputs/apk/debug/coach-debug.apk Orbis-Atlas-v1.0.0-RC1-debug.apk
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: Orbis-Decision-Terminal-v1.0.0-RC1-debug
-          path: Orbis-Decision-Terminal-v1.0.0-RC1-debug.apk
+          name: Orbis-Atlas-v1.0.0-RC1-debug
+          path: Orbis-Atlas-v1.0.0-RC1-debug.apk
           if-no-files-found: error
           retention-days: 30
       - name: Upload Gradle diagnostics
