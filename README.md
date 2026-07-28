@@ -1,55 +1,50 @@
-# Orbis Decision Terminal
+# Orbis Atlas
 
-Aplicativo Android de apoio à decisão, veto e gestão de risco para validação exclusivamente em conta demo.
+Aplicativo Android de apoio a decisões de **swing em moedas**, desenhado para quem ainda não sabe interpretar gráficos.
 
-O Terminal não executa ordens, não promete rentabilidade e não utiliza martingale. Ele foi concebido para operar menos, rejeitar entradas ruins e produzir evidência auditável sobre o que realmente funciona.
+O usuário escolhe o par de moedas e informa uma banca virtual. O Atlas baixa séries diárias oficiais do Banco Central Europeu, calcula tendência, momentum, volatilidade e distância da média, e responde em linguagem simples:
 
-## O que esta versão contém
+- **COMPRAR** a moeda-base;
+- **VENDER** a moeda-base; ou
+- **AGUARDAR**.
 
-- Mercado aberto e OTC com amostras separadas.
-- Memória multi-timeframe: contexto 15m, estrutura 5m e entrada 1m.
-- Rastreamento temporal de candles.
-- Estrutura de mercado e classificação de regime.
-- Playbooks de pullback, rompimento, retorno à média e reversão.
-- Etapas de setup: contexto, formação, armado, válido, perdido e invalidado.
-- Qualidade da entrada, atraso, extensão e espaço até obstáculo.
-- Probabilidade condicionada, intervalo conservador, break-even e expectativa.
-- Motor de veto superior ao motor de sinal.
-- Política de risco da sessão sem martingale.
-- Modos Observador, Assistido e Cego.
-- Overlay arrastável e recolhível.
-- Diário local SQLite, comparação humano × sistema e exportação CSV.
-- Métricas de profit factor, drawdown, aderência e perdas bloqueadas.
+Quando existe um plano, o aplicativo informa faixa de entrada, stop, dois alvos, prazo estimado, risco máximo em reais e tamanho teórico da posição. A versão RC1 funciona somente em simulação e não envia ordens a corretoras.
 
-## Como obter o APK
+## Princípios do produto
 
-Abra **Actions**, escolha a execução verde mais recente e baixe o artifact:
+- Sem overlay, captura de tela ou dependência do layout de uma corretora.
+- Sem opções binárias, martingale, scalping ou promessa de lucro rápido.
+- Dados diários, com horizonte de 5 a 20 pregões.
+- Risco máximo configurável entre 0,1% e 1% da banca virtual.
+- Preferência explícita por `AGUARDAR` quando o cenário estiver misto, esticado, desatualizado ou excessivamente volátil.
+- Diário de operações simuladas com fechamento por alvo, stop ou decisão manual.
+- Notificação diária opcional.
 
-`Orbis-Decision-Terminal-v1.0.0-RC1-debug`
+## Fonte de dados
 
-Extraia o ZIP e instale o APK. O `applicationId` é próprio, portanto ele pode coexistir com o Orbis Trade AI.
+O provedor primário é o **ECB Data Portal**, usando séries `EXR` de taxas de referência diárias. O Atlas calcula pares cruzados localmente a partir das taxas publicadas contra o euro.
 
-## Protocolo multi-timeframe
+As taxas do BCE têm finalidade informativa e não representam necessariamente o preço executável de uma corretora. Por isso, esta versão não se apresenta como plataforma de execução em tempo real.
 
-Para o mesmo ativo e modalidade:
+## APK
 
-1. Selecione **Contexto 15m** no aplicativo e deixe o gráfico em 15 minutos até a memória aparecer como `OK`.
-2. Selecione **Estrutura 5m** e altere o gráfico para 5 minutos.
-3. Selecione **Entrada 1m** e altere o gráfico para 1 minuto.
-4. Somente candidatos detectados no timeframe de entrada são gravados no diário.
+Abra **Actions**, escolha a execução verde mais recente e baixe:
 
-A memória expira automaticamente. Contexto contrário, ausente ou vencido impede autorização operacional.
+`Orbis-Atlas-v1.0.0-RC1-debug`
 
-## Protocolo de validação
+O `applicationId` é `com.orbisgpt.atlas`, permitindo instalação paralela às versões anteriores do Orbis.
 
-- Use apenas conta demo.
-- Não altere parâmetros durante a janela de teste.
-- Registre a escolha humana antes de revelar o sistema no modo Cego.
-- Marque cada candidato como `WIN`, `LOSS`, `DRAW` ou `INVALIDATED`.
-- Informe se seguiu o plano.
-- Exporte o CSV diariamente.
-- Não interprete amostras pequenas como vantagem comprovada.
+## Uso
+
+1. Escolha a moeda-base e a moeda de comparação.
+2. Defina uma banca virtual e o risco máximo por plano.
+3. Toque em **Atualizar análise**.
+4. Leia somente a decisão principal e as três instruções exibidas.
+5. Quando houver plano, use **Simular este plano** antes de considerar qualquer aplicação prática.
+6. Reavalie após a próxima publicação diária.
 
 ## Desenvolvimento
 
-A arquitetura está congelada em [`ARCHITECTURE.md`](ARCHITECTURE.md). O GitHub Actions executa testes unitários antes de gerar o APK.
+O módulo ativo é `:coach`. O GitHub Actions executa testes unitários e só depois gera o APK.
+
+A arquitetura está documentada em [`ATLAS_ARCHITECTURE.md`](ATLAS_ARCHITECTURE.md).
