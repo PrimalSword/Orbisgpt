@@ -1,5 +1,6 @@
 package com.orbisgpt.terminal.core
 
+import com.orbisgpt.terminal.engine.SessionWindowEngine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -32,20 +33,36 @@ object RuntimeState {
     fun updateSettings(transform: (TerminalSettings) -> TerminalSettings) {
         _settings.value = transform(_settings.value)
         _terminal.value = _terminal.value.copy(settings = _settings.value)
+        refreshSessionRisk()
     }
 
     fun setSession(value: SessionState) {
-        _session.value = value
-        _terminal.value = _terminal.value.copy(session = value)
+        val startedAt = _session.value.startedAt
+        val effective = if (_journal.value.isEmpty()) value.copy(startedAt = startedAt)
+        else SessionWindowEngine.rebuild(_journal.value, _settings.value, startedAt)
+        _session.value = effective
+        _terminal.value = _terminal.value.copy(session = effective)
     }
 
-    fun resetSession() = setSession(SessionState())
+    fun resetSession() {
+        val fresh = SessionState()
+        _session.value = fresh
+        _terminal.value = _terminal.value.copy(session = fresh)
+    }
 
     fun updateTerminal(value: TerminalSnapshot) {
         _terminal.value = value.copy(settings = _settings.value, session = _session.value)
     }
 
-    fun updateJournal(items: List<JournalItem>) { _journal.value = items }
+    fun updateJournal(items: List<JournalItem>) {
+        _journal.value = items
+    }
+
+    fun refreshSessionRisk() {
+        val effective = SessionWindowEngine.rebuild(_journal.value, _settings.value, _session.value.startedAt)
+        _session.value = effective
+        _terminal.value = _terminal.value.copy(session = effective)
+    }
 
     fun remember(snapshot: TimeframeSnapshot) {
         val current = _terminal.value
