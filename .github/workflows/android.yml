@@ -1,0 +1,53 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main, "feature/**", "hotfix/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :app:testDebugUnitTest --stacktrace 2>&1 | tee gradle-test.log
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :app:assembleDebug --stacktrace 2>&1 | tee gradle-build.log
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk Orbis-Decision-Terminal-v1.0.0-RC1-debug.apk
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Orbis-Decision-Terminal-v1.0.0-RC1-debug
+          path: Orbis-Decision-Terminal-v1.0.0-RC1-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload Gradle diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-diagnostics
+          path: |
+            gradle-test.log
+            gradle-build.log
+          if-no-files-found: ignore
+          retention-days: 7
